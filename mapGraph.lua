@@ -1,5 +1,9 @@
 function newNode(x, y)
-	return {x = x, y = y, outgoing = {}}
+	return {x = x, y = y, outgoing = {}, visitingTeams = {
+			--team 1 might look like: {bigUnits = {}, mediumUnits = {}, smallUnits = {}}
+			--index by 1, 2, 3, etc. using table.insert()
+			}
+		}
 end
 
 --Could receive a generic 

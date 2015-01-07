@@ -1,16 +1,19 @@
 input = {}
+local cartography = model.cartography
+local modelInput = model.input
+local mapGraph = model.mapGraph
 
 function inputUpdate(dt)
 	if love.mouse.isDown('l') then
 		local x, y = love.mouse.getPosition()
-		model.input.dragEnd = {x = x, y = y}
-		if model.cartography.drawEdgeMode then
-			model.cartography.dragEnd = nearestWithin(model.input.dragEnd, model.mapGraph.nodes, model.cartography.snapRange)
-		elseif model.cartography.dragBegin then
-			model.cartography.dragBegin.x, model.cartography.dragBegin.y = x, y
+		modelInput.dragEnd = {x = x, y = y}
+		if cartography.createEdgeMode then
+			cartography.dragEnd = nearestWithin(modelInput.dragEnd, mapGraph.nodes, cartography.snapRange)
+		elseif cartography.moveNodeMode and cartography.dragBegin then
+			cartography.dragBegin.x, cartography.dragBegin.y = x, y
 		end
 	else
-		model.input.dragBegin = nil
+		modelInput.dragBegin = nil
 	end
 end
 
@@ -31,12 +34,15 @@ end
 --Stand-in for love.mousepressed, so we can support non-mouse cursors.
 function cursorpressed(x, y, button)
 	if button == 'l' then
-		model.input.dragBegin = {x = x, y = y}
-		model.input.dragEnd = model.input.dragBegin --To avoid dereferencing nil if we want to draw a line and dragEnd is not yet updated.
-		if model.cartography.drawEdgeMode then --There could be a lot of map nodes, don't want to do this unless we have to.
-			model.cartography.dragBegin = nearestWithin(model.input.dragBegin, model.mapGraph.nodes, model.cartography.snapRange)
-		else
-			model.cartography.dragBegin = nearestWithin(model.input.dragBegin, model.mapGraph.nodes, model.cartography.selectRange)
+		modelInput.dragBegin = {x = x, y = y}
+		modelInput.dragEnd = modelInput.dragBegin --To avoid dereferencing nil if we want to draw a line and dragEnd is not yet updated.
+		if cartography.createEdgeMode then --There could be a lot of map nodes, don't want to do this unless we have to.
+			cartography.dragBegin = nearestWithin(modelInput.dragBegin, mapGraph.nodes, cartography.snapRange)
+		elseif cartography.moveNodeMode then
+			cartography.dragBegin = nearestWithin(modelInput.dragBegin, mapGraph.nodes, cartography.selectRange)
+		elseif cartography.createUnitMode then
+			--This may cause problems once I implement node/edge deletion.
+			model.selectedNode = nearestWithin(modelInput.dragBegin, mapGraph.nodes, cartography.selectRange)
 		end
 	end
 end
@@ -44,38 +50,64 @@ end
 --Stand-in for love.mousereleased, so we can support non-mouse cursors.
 function cursorreleased(x, y, button)
 	if button == 'l' then
-		model.input.dragEnd = {x = x, y = y}
-		if model.cartography.drawEdgeMode then
+		modelInput.dragEnd = {x = x, y = y}
+		if cartography.createEdgeMode then
 			local beginNode, endNode
 			--Create new nodes if the beginning or end of the drag needs one.
-			if not model.cartography.dragBegin then
-				beginNode = newNode(model.input.dragBegin.x, model.input.dragBegin.y)
-				table.insert(model.mapGraph.nodes, beginNode)
+			if not cartography.dragBegin then
+				beginNode = newNode(modelInput.dragBegin.x, modelInput.dragBegin.y)
+				table.insert(mapGraph.nodes, beginNode)
 			else
-				beginNode = model.cartography.dragBegin
+				beginNode = cartography.dragBegin
 			end
-			if not model.cartography.dragEnd then
-				endNode = newNode(model.input.dragEnd.x, model.input.dragEnd.y)
-				table.insert(model.mapGraph.nodes, endNode)
+			if not cartography.dragEnd then
+				endNode = newNode(modelInput.dragEnd.x, modelInput.dragEnd.y)
+				table.insert(mapGraph.nodes, endNode)
 			else
-				endNode = model.cartography.dragEnd
+				endNode = cartography.dragEnd
 			end
 			--Create an edge between the two nodes, if there is not one there already.
 			if not edgeExists(beginNode, endNode) then
 				table.insert(beginNode.outgoing, endNode)
 			end
-		elseif model.cartography.dragBegin then
-			model.cartography.dragBegin.x, model.cartography.dragBegin.y = x, y
+		elseif cartography.moveNodeMode and cartography.dragBegin then
+			cartography.dragBegin.x, cartography.dragBegin.y = x, y
 		end
-		model.input.dragBegin = nil
-		model.input.dragEnd = nil
-		model.cartography.dragBegin = nil
-		model.cartography.dragEnd = nil
+		modelInput.dragBegin  = nil
+		modelInput.dragEnd    = nil
+		cartography.dragBegin = nil
+		cartography.dragEnd = nil
 	end
 end
 
 function love.keyreleased(key)
 	if key == 'p' then
-		model.cartography.drawEdgeMode = not model.cartography.drawEdgeMode
+		if cartography.createEdgeMode then
+			cartography.createEdgeMode = false
+			cartography.moveNodeMode = true
+		elseif cartography.moveNodeMode then
+			cartography.moveNodeMode = false
+			cartography.createUnitMode = true
+		elseif cartography.createUnitMode then
+			cartography.createUnitMode = false
+			cartography.createEdgeMode = true
+			model.selectedNode = nil --This is really the wrong place for this.
+		end
+	elseif key == "b" or key == "m" or key == "s" then
+		if cartography.createUnitMode then
+			if model.selectedNode then
+				if not model.selectedNode.visitingTeams[1] then
+					table.insert(model.selectedNode.visitingTeams, {bigUnits = {}, mediumUnits = {}, smallUnits = {}})
+				end
+				local team1 = model.selectedNode.visitingTeams[1]
+				if key == "b" then
+					table.insert(team1.bigUnits, makeUnit("big", model.selectedNode))
+				elseif key == "m" then
+					table.insert(team1.mediumUnits, makeUnit("medium", model.selectedNode))
+				elseif key == "s" then
+					table.insert(team1.smallUnits, makeUnit("small", model.selectedNode))
+				end
+			end
+		end
 	end
 end

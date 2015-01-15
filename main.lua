@@ -3,7 +3,7 @@ require("model") --Contains main model definition and associated references.
 require("gameMath")
 require("input")
 local LightWorld = require("light_world/lib")
-local view = spaceView --Default view is space theme.
+view = spaceView --Default view is space theme.
 local stateModel = model
 
 function love.load()

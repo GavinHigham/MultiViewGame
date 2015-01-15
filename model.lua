@@ -1,4 +1,6 @@
 require("mapGraph")
+--Model should store everything is needed for an abstract representation of the game.
+--It also describes the namespace setup somewhat.
 model = {
 		mapGraph = {
 			nodes = {}

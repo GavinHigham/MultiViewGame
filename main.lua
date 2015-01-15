@@ -7,6 +7,12 @@ local view = spaceView --Default view is space theme.
 local stateModel = model
 
 function love.load()
+	local windowMode = {
+		resizable = true,
+		fsaa = 8
+	}
+	love.window.setMode(1280, 800, windowMode)
+
 	lightWorld = LightWorld({
 		ambient = {view.ambientLight, view.ambientLight, view.ambientLight}
 	})

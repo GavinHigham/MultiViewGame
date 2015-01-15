@@ -44,3 +44,17 @@ function unitUpdate(unit, dt)
 	unit.x = unit.restX - (unit.restX - unit.x)*0.9
 	unit.y = unit.restY - (unit.restY - unit.y)*0.9
 end
+
+function addUnitToNode(unit, teamNumber, node)
+	if not node.visitingTeams[teamNumber] then
+		table.insert(node.visitingTeams, {bigUnits = {}, mediumUnits = {}, smallUnits = {}})
+	end
+	local team = node.visitingTeams[teamNumber]
+	if unit.size == "big" then
+		table.insert(team.bigUnits, unit)
+	elseif unit.size == "medium" then
+		table.insert(team.mediumUnits, unit)
+	elseif unit.size == "small" then
+		table.insert(team.smallUnits, unit)
+	end
+end

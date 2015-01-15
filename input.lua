@@ -96,16 +96,13 @@ function love.keyreleased(key)
 	elseif key == "b" or key == "m" or key == "s" then
 		if cartography.createUnitMode then
 			if model.selectedNode then
-				if not model.selectedNode.visitingTeams[1] then
-					table.insert(model.selectedNode.visitingTeams, {bigUnits = {}, mediumUnits = {}, smallUnits = {}})
-				end
-				local team1 = model.selectedNode.visitingTeams[1]
+				local teamNumber = 1
 				if key == "b" then
-					table.insert(team1.bigUnits, makeUnit("big", model.selectedNode))
+					addUnitToNode(makeUnit("big", model.selectedNode), teamNumber, model.selectedNode)
 				elseif key == "m" then
-					table.insert(team1.mediumUnits, makeUnit("medium", model.selectedNode))
+					addUnitToNode(makeUnit("medium", model.selectedNode), teamNumber, model.selectedNode)
 				elseif key == "s" then
-					table.insert(team1.smallUnits, makeUnit("small", model.selectedNode))
+					addUnitToNode(makeUnit("small", model.selectedNode), teamNumber, model.selectedNode)
 				end
 			end
 		end

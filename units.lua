@@ -47,14 +47,14 @@ end
 
 function addUnitToNode(unit, teamNumber, node)
 	if not node.visitingTeams[teamNumber] then
-		table.insert(node.visitingTeams, {bigUnits = {}, mediumUnits = {}, smallUnits = {}})
+		node.visitingTeams[teamNumber] = {bigUnits = {}, mediumUnits = {}, smallUnits = {}}
 	end
 	local team = node.visitingTeams[teamNumber]
-	if unit.size == "big" then
-		table.insert(team.bigUnits, unit)
-	elseif unit.size == "medium" then
+	if unit.classStats.size == "big" then
+		table.insert(node.visitingTeams[teamNumber].bigUnits, unit)
+	elseif unit.classStats.size == "medium" then
 		table.insert(team.mediumUnits, unit)
-	elseif unit.size == "small" then
+	elseif unit.classStats.size == "small" then
 		table.insert(team.smallUnits, unit)
 	end
 end

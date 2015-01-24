@@ -22,7 +22,7 @@ function spaceViewLoad()
 	mc = model.cartography
 end
 
-function spaceViewDraw()
+function spaceView.draw()
 	spaceViewDrawBG()
 	love.graphics.push()
     --love.graphics.translate(x, y)
@@ -152,8 +152,6 @@ function spaceViewDrawUI()
 	end
 end
 
-spaceView.draw = spaceViewDraw
-
 --Draws an arrow with two fins, "finAngle" away from the base line, oriented toward the right with an offset of "orientation". Units are in radians.
 function drawArrow(x, y, x2, y2, finLength, finWidth, style, double)
 	local double = double or false
@@ -190,5 +188,3 @@ function spaceViewUnitDraw(unit)
 		--Extend from here
 	end
 end
-
-spaceView.unitDraw = spaceViewUnitDraw

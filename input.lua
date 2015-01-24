@@ -3,7 +3,7 @@ local cartography = model.cartography
 local modelInput = model.input
 local mapGraph = model.mapGraph
 
-function inputUpdate(dt)
+function input.update(dt)
 	if love.mouse.isDown('l') then
 		local x, y = love.mouse.getPosition()
 		modelInput.dragEnd = {x = x, y = y}
@@ -16,9 +16,6 @@ function inputUpdate(dt)
 		modelInput.dragBegin = nil
 	end
 end
-
-input.update = inputUpdate
-
 
 function love.mousepressed(x, y, button)
 	cursorpressed(x, y, button)

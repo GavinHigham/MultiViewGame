@@ -22,11 +22,14 @@ model = {
 		},
 		selectedNode = nil
 	}
+--Ideas for improvement:
+--**Move input variables into their own model, and make this one "GameModel".
+--If I want this game to have multiple possible views, they might have different notions of game input.
+--**Have context-specific models.
+--The model I need for creating maps is also not really necessary for gameplay.
 
-function modelUpdate(dt)
+function model.update(dt)
 	for i, entity in ipairs(model.entities) do
 		entity:update(dt)
 	end
 end
-
-model.update = modelUpdate

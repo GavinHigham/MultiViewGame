@@ -11,6 +11,14 @@ function normalize(x, y)
 	return x/mag, y/mag
 end
 
+function vectorScale(x, y, magnitude)
+	return x*magnitude, y*magnitude
+end
+
+function vectorRotate(x, y, angle)
+	return x*math.cos(angle) - y*math.sin(angle), x*math.sin(angle) + y*math.cos(angle)
+end
+
 --Find the nearest point in a table to some source point.
 --Each point in the table, and the source point, must have a .x and .y attribute for distance calculations.
 --Range is a distance, it controls how close a table point must be to the source point to be acceptable.
@@ -18,7 +26,7 @@ end
 function nearestWithin(sourcePoint, table, range)
 	local closestDistance
 	local closestPoint
-	for i, point in ipairs(table) do
+	for _, point in ipairs(table) do
 		local currentDistance = distance(sourcePoint, point)
 		if currentDistance < range and ((not closestPoint) or currentDistance < closestDistance) then
 			closestPoint = point

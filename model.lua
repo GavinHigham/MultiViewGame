@@ -2,20 +2,18 @@ require("mapGraph")
 --Model should store everything is needed for an abstract representation of the game.
 --It also describes the namespace setup somewhat.
 require("units")
-model = {
+gameModel = {
 		mapGraph = {
 			nodes = {}
 		},
 		cartography = {
-			createEdgeMode = true,
-			moveNodeMode   = false,
-			createUnitMode = false,
+			mode = "createEdge",
 			dragBegin = nil, --Begin of drag could be overriden.
 			dragEnd   = nil,   --End of drag could be overriden.
 			snapRange   = 50,
 			selectRange = 25
 		},
-		entities = {},
+		units = {},
 		input = {
 			dragBegin = nil,
 			dragEnd   = nil
@@ -28,8 +26,8 @@ model = {
 --**Have context-specific models.
 --The model I need for creating maps is also not really necessary for gameplay.
 
-function model.update(dt)
-	for i, entity in ipairs(model.entities) do
-		entity:update(dt)
+function gameModel.update(dt)
+	for _, unit in ipairs(gameModel.units) do
+		Unit.update(unit, dt)
 	end
 end

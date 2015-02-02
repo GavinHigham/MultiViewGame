@@ -2,15 +2,16 @@ require("spaceView")
 require("model") --Contains main model definition and associated references.
 require("gameMath")
 require("input")
-local LightWorld = require("light_world/lib")
+require("util")
+--local LightWorld = require("light_world/lib")
 view = spaceView --Default view is space theme.
 local stateModel = model
 
 function love.load()
-	lightWorld = LightWorld({
+	--[[lightWorld = LightWorld({
 		ambient = {view.ambientLight, view.ambientLight, view.ambientLight}
-	})
-	spaceViewLoad()
+	})]]
+	view.load()
 end
 
 function love.draw()
@@ -18,8 +19,8 @@ function love.draw()
 end
 
 function love.update(dt)
-	lightWorld:update(dt)
+	--lightWorld:update(dt)
 	--lightWorld:setTranslation(x, y, scale)
-	model.update(dt)
+	gameModel.update(dt)
 	input.update(dt)
 end

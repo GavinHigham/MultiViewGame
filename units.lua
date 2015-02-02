@@ -1,60 +1,61 @@
---Default stats for different sized units.
---Max health, shields, attack, etc.
-local bigStats    = {
-	size = "big",
-	maxHealth = 400
+Unit = {
+	--Default stats for different sized units.
+	--Max health, shields, attack, etc.
+	bigPrototype    = {
+		size = "big",
+		maxHealth = 400,
+		view = {key = "val"} --Where custom drawing data goes.
+	},
+	mediumPrototype = {
+		size = "medium",
+		maxHealth = 150,
+		view = {}
+	},
+	smallPrototype  = {
+		size = "small",
+		maxHealth = 50,
+		view = {}
+	},
+	view = {}
 }
-local mediumStats = {
-	size = "medium",
-	maxHealth = 150
-}
-local smallStats  = {
-	size = "small",
-	maxHealth = 50
-}
 
-function makeUnit(unitType, node)
-	local newUnit = {
-		location = node,
-		draw = view.unitDraw,
-		update = unitUpdate,
-		x = node.x,
-		y = node.y,
-		restX = node.x,
-		restY = node.y
-	}
-	if unitType == "big" then
-		--Make big unit
-		newUnit.classStats = bigStats
-	elseif unitType == "medium" then
-		--Make medium unit
-		newUnit.classStats = mediumStats
-	elseif unitType == "small" then
-		--Make small unit
-		newUnit.classStats = smallStats
-	else
-		--Extend from here.
-	end
+Unit.bigPrototype.update    = Unit.update
+Unit.mediumPrototype.update = Unit.update
+Unit.smallPrototype.update  = Unit.update
 
-	table.insert(model.entities, newUnit)
-	return newUnit
-end
+function Unit.new(prototype, node, teamNumber)
+	--Create the unit
+	--Inherit some attributes from the prototype.
+	local newUnit = shallowCopy(prototype)
+	newUnit.node = node
+	newUnit.x = node.x
+	newUnit.y = node.y
+	newUnit.restX = node.x
+	newUnit.restY = node.y
+	newUnit.teamNumber = teamNumber
+	newUnit.view = shallowCopy(prototype.view)
 
-function unitUpdate(unit, dt)
-	unit.x = unit.restX - (unit.restX - unit.x)*0.9
-	unit.y = unit.restY - (unit.restY - unit.y)*0.9
-end
+	--Add it to our general units list.
+	table.insert(gameModel.units, newUnit)
 
-function addUnitToNode(unit, teamNumber, node)
+	--Add it to the node to which it has been assigned.
 	if not node.visitingTeams[teamNumber] then
 		node.visitingTeams[teamNumber] = {bigUnits = {}, mediumUnits = {}, smallUnits = {}}
 	end
 	local team = node.visitingTeams[teamNumber]
-	if unit.classStats.size == "big" then
-		table.insert(node.visitingTeams[teamNumber].bigUnits, unit)
-	elseif unit.classStats.size == "medium" then
-		table.insert(team.mediumUnits, unit)
-	elseif unit.classStats.size == "small" then
-		table.insert(team.smallUnits, unit)
+	if newUnit.size == "big" then
+		table.insert(node.visitingTeams[teamNumber].bigUnits, newUnit)
+	elseif newUnit.size == "medium" then
+		table.insert(team.mediumUnits, newUnit)
+	elseif newUnit.size == "small" then
+		table.insert(team.smallUnits, newUnit)
 	end
+
+
+	--Return the new unit in case additional config needs to be done.
+	return newUnit
+end
+
+function Unit.update(unit, dt)
+	if Unit.view.update then Unit.view.update(unit, dt) end
 end

@@ -2,6 +2,7 @@ function newNode(x, y)
 	return {
 		x = x,
 		y = y,
+		pos = {x = x, y = y, z = 1},
 		outgoing = {},
 		visitingTeams = {
 			--team 1 might look like: {bigUnits = {}, mediumUnits = {}, smallUnits = {}}

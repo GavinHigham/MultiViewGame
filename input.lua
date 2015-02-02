@@ -15,6 +15,32 @@ function input.update(dt)
 	else
 		modelInput.dragBegin = nil
 	end
+	if love.mouse.isDown('r') then
+		local x, y = love.mouse.getPosition()
+		inputModel.panEnd = {x = x, y = y}
+	else
+		inputModel.panBegin = nil
+	end
+	if inputModel.panBegin and inputModel.panEnd then
+		local w, h = love.window.getDimensions()
+		for _, node in ipairs(gameModel.mapGraph.nodes) do
+			--[[local rotX = inputModel.panEnd.x-inputModel.panBegin.x
+			local rotY = inputModel.panEnd.y-inputModel.panBegin.y
+			rotX, rotY = normalize(vectorRotate(rotX, rotY, math.pi/2))
+			local angle = distance(inputModel.panBegin, inputModel.panEnd)/1500000]]
+			local angle = 0.0001
+			local mag = distance({x = 0, y = 0}, node.pos)
+			local newX, newY = normalize(node.pos.x, node.pos.y)
+			newX = newX - 0.5
+			newY = newY - 0.5
+			local newZ = node.pos.z/mag - 0.5
+			newX, newY, newZ = axisAngleVectorRotate(newX, newY, newZ, 0, 1, 0, angle)
+			node.pos.x = (newX+0.5)*mag
+			node.pos.y = (newY+0.5)*mag
+			node.pos.z = (newZ+0.5)*mag
+			print("X: " .. newX .. " Y: " .. newY .. " Z: " .. newZ)
+		end
+	end
 end
 
 function love.mousepressed(x, y, button)
@@ -47,6 +73,8 @@ function cursorpressed(x, y, button)
 				--This may cause problems once I implement node/edge deletion.
 				gameModel.selectedNode = nearestWithin(modelInput.dragBegin, mapGraph.nodes, cartography.selectRange)
 			end
+		elseif button == 'r' then
+			inputModel.panBegin = {x = x, y = y}
 		end
 	end
 end
@@ -81,6 +109,8 @@ function cursorreleased(x, y, button)
 		modelInput.dragEnd    = nil
 		cartography.dragBegin = nil
 		cartography.dragEnd   = nil
+	elseif button == 'r' then
+		inputModel.panEnd = {x = x, y = y}
 	end
 end
 
@@ -110,6 +140,14 @@ function love.keyreleased(key)
 					Unit.new(Unit.smallPrototype, gameModel.selectedNode, teamNumber)
 				end
 			end
+		end
+	elseif key == "1" then
+		for _, node in ipairs(gameModel.mapGraph.nodes) do
+			node.pos.z = node.pos.z + 0.3
+		end
+	elseif key == "2" then
+		for _, node in ipairs(gameModel.mapGraph.nodes) do
+			node.pos.z = node.pos.z - 0.3
 		end
 	end
 end

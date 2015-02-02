@@ -12,6 +12,7 @@ function love.load()
 		ambient = {view.ambientLight, view.ambientLight, view.ambientLight}
 	})]]
 	view.load()
+	axisAngleVectorRotateTest()
 end
 
 function love.draw()

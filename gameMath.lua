@@ -19,6 +19,24 @@ function vectorRotate(x, y, angle)
 	return x*math.cos(angle) - y*math.sin(angle), x*math.sin(angle) + y*math.cos(angle)
 end
 
+--This is probably broken.
+function axisAngleVectorRotate(x, y, z, ux, uy, uz, angle)
+	local s, c = math.sin(angle), math.cos(angle)
+	local c1 = 1-c
+	retX = ux*(c + ux*ux*c1)  + uy*(ux*uy*c1-uz*s) + uz*(ux*uz*c1 + uy*s)
+	retY = ux*(uy*ux*c1+uz*s) + uy*(c+uy*uy*c1)    + uz*(uy*uz*c1-ux*s)
+	retZ = ux*(uz*ux*c1-uy*s) + uy*(uz*uy*c +ux*s) + uz*(c + uz*uz*c1)
+	return retX, retY, retZ
+end
+
+function axisAngleVectorRotateTest()
+	local x, y, z = axisAngleVectorRotate(1, 0, 0, 0, 0, 1, math.pi/2)
+	print("x: " .. x .. " y: " .. y .. " z: " .. z)
+	assert(x == 0)
+	assert(y == 1)
+	assert(z == 0)
+end
+
 --Find the nearest point in a table to some source point.
 --Each point in the table, and the source point, must have a .x and .y attribute for distance calculations.
 --Range is a distance, it controls how close a table point must be to the source point to be acceptable.

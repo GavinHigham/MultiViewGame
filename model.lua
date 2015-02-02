@@ -20,6 +20,11 @@ gameModel = {
 		},
 		selectedNode = nil
 	}
+
+inputModel = {
+	panBegin = nil,
+	panEnd   = nil
+}
 --Ideas for improvement:
 --**Move input variables into their own model, and make this one "GameModel".
 --If I want this game to have multiple possible views, they might have different notions of game input.
@@ -29,5 +34,10 @@ gameModel = {
 function gameModel.update(dt)
 	for _, unit in ipairs(gameModel.units) do
 		Unit.update(unit, dt)
+	end
+	local w, h = love.window.getDimensions()
+	for _, node in ipairs(gameModel.mapGraph.nodes) do
+		node.x = (node.pos.x-w/2)/node.pos.z+w/2
+		node.y = (node.pos.y-h/2)/node.pos.z+h/2
 	end
 end

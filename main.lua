@@ -1,18 +1,21 @@
+require("gameMath")
 require("spaceView")
 require("model") --Contains main model definition and associated references.
-require("gameMath")
 require("input")
 require("util")
 --local LightWorld = require("light_world/lib")
 view = spaceView --Default view is space theme.
 local stateModel = model
+window = {}
 
 function love.load()
 	--[[lightWorld = LightWorld({
 		ambient = {view.ambientLight, view.ambientLight, view.ambientLight}
 	})]]
 	view.load()
-	axisAngleVectorRotateTest()
+	local w, h = love.window.getDimensions()
+	window.w = w
+	window.h = h
 end
 
 function love.draw()

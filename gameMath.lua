@@ -1,3 +1,13 @@
+matrix = require("matrix")
+
+--Handy angles
+deg15  = math.pi/12
+deg30  = math.pi/6
+deg60  = math.pi/3
+deg45  = math.pi/4
+deg90  = math.pi/2
+deg120 = math.pi*2/3
+
 --Returns the distance between two points.
 --p1 and p2 must be tables that each have attributes .x and .y.
 function distance(p1, p2)
@@ -11,6 +21,12 @@ function normalize(x, y)
 	return x/mag, y/mag
 end
 
+function vec3norm(x, y, z)
+	local mag = math.sqrt(x*x+y*y+z*z)
+	if mag == 0 then mag = 1 end
+	return x/mag, y/mag, z/mag
+end
+
 function vectorScale(x, y, magnitude)
 	return x*magnitude, y*magnitude
 end
@@ -20,19 +36,24 @@ function vectorRotate(x, y, angle)
 end
 
 --This is probably broken.
-function axisAngleVectorRotate(x, y, z, ux, uy, uz, angle)
-	local s, c = math.sin(angle), math.cos(angle)
+function axisAngleVectorRotateMatrix(ux, uy, uz, angle)
+	local s = math.sin(angle)
+	local c = math.cos(angle)
+	--print("s: " .. s .. " c: " .. c)
 	local c1 = 1-c
-	retX = ux*(c + ux*ux*c1)  + uy*(ux*uy*c1-uz*s) + uz*(ux*uz*c1 + uy*s)
-	retY = ux*(uy*ux*c1+uz*s) + uy*(c+uy*uy*c1)    + uz*(uy*uz*c1-ux*s)
-	retZ = ux*(uz*ux*c1-uy*s) + uy*(uz*uy*c +ux*s) + uz*(c + uz*uz*c1)
-	return retX, retY, retZ
+	return matrix{
+		{c + ux*ux*c1,    ux*uy*c1 - uz*s, ux*uz*c1 + uy*s},
+		{uy*ux*c1 + uz*s, c + uy*uy*c1,    uy*uz*c1 - ux*s},
+		{uz*ux*c1 - uy*s, uz*uy*c1 + ux*s, c + uz*uz*c1}
+	}
 end
 
+--Dead code
 function axisAngleVectorRotateTest()
 	local x, y, z = axisAngleVectorRotate(1, 0, 0, 0, 0, 1, math.pi/2)
 	print("x: " .. x .. " y: " .. y .. " z: " .. z)
-	assert(x == 0)
+	--assert(math.cos(math.pi/2.0) == 0)
+	--assert(x == 0)
 	assert(y == 1)
 	assert(z == 0)
 end

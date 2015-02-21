@@ -14,14 +14,18 @@ local unitDiameter = 10
 local rankSpacing = 5
 local triadSpacing = 5
 local selectedOffset = 0
-
---Handy angles
-local deg15  = math.pi/12
-local deg30  = math.pi/6
-local deg60  = math.pi/3
-local deg45  = math.pi/4
-local deg90  = math.pi/2
-local deg120 = math.pi*2/3
+local rotateDistance = 1
+cubeRot = matrix{{1,0,0},{0,1,0},{0,0,1}}
+cubeVerts = {
+	matrix{{ 1,  1,  1}}^'T', --right top    front
+	matrix{{-1,  1,  1}}^'T', --left  top    front
+	matrix{{-1,  1, -1}}^'T', --left  top    back
+	matrix{{ 1,  1, -1}}^'T', --right top    back
+	matrix{{ 1, -1, -1}}^'T', --right bottom back
+	matrix{{-1, -1, -1}}^'T', --left  bottom back
+	matrix{{-1, -1,  1}}^'T', --left  bottom front
+	matrix{{ 1, -1,  1}}^'T'    --right bottom front
+ }
 
 function spaceView.load()
 	tex.space_bg = love.graphics.newImage("tex/bg/bg_stars.jpg")
@@ -60,23 +64,59 @@ end
 
 function spaceView.drawUnlit()
 	love.graphics.setColor(75, 75, 255, 255) --Light bluish
-	for _, u in ipairs(gameModel.mapGraph.nodes) do
-		for _, v in ipairs(u.outgoing) do
-			love.graphics.line(u.x, u.y, v.x, v.y)
-			drawArrow(v.x, v.y, u.x, u.y, finLength, finWidth, "fill")
+	--Edges (jump connections) are drawn here.
+	for _, edge in ipairs(gameModel.mapGraph.edges) do
+		love.graphics.line(edge.u.x, edge.u.y, edge.v.x, edge.v.y)
+		drawArrow(edge.v.x, edge.v.y, edge.u.x, edge.u.y, finLength, finWidth, "fill")
+		drawArrow(edge.u.x, edge.u.y, edge.v.x, edge.v.y, finLength, finWidth, "fill")
+	end
+
+	--This is the drag line
+	if mi.dragBegin then
+		if mc.dragBegin or mc.dragEnd then
+			love.graphics.setColor(200, 40, 40, 255)
+			local lineBegin = mc.dragBegin or mi.dragBegin
+			local lineEnd = mc.dragEnd or mi.dragEnd
+			love.graphics.line(lineBegin.x, lineBegin.y, lineEnd.x, lineEnd.y)
+			drawArrow(lineEnd.x, lineEnd.y, lineBegin.x, lineBegin.y, finLength+5, finWidth+4, "fin")
 		end
+		--Non-overriden line:
+		love.graphics.setColor(100, 100, 100, 255)
+		love.graphics.line(mi.dragBegin.x, mi.dragBegin.y, mi.dragEnd.x, mi.dragEnd.y)
+		--drawArrow(mi.dragEnd.x, mi.dragEnd.y, mi.dragBegin.x, mi.dragBegin.y, finLength, finWidth)
 	end
 
 	--Nodes (stars) are drawn here.
 	for _, node in ipairs(gameModel.mapGraph.nodes) do
+		newPos = node.rot*matrix{{node.pos.x, node.pos.y, node.pos.z-rotateDistance}}^'T'
+		node.x = (newPos[1][1]/(newPos[3][1]+rotateDistance)*window.w)+window.w/2
+		node.y = (newPos[2][1]/(newPos[3][1]+rotateDistance)*window.w)+window.h/2
 		love.graphics.setColor(100, 220, 100, 255) --Light greenish
 		love.graphics.circle("fill", node.x, node.y, 5, 16)
 		spaceView.units.drawVisiting(node)
 		--love.graphics.rectangle("line", node.x, node.y, 100, 100) --Hehe, this looks pretty cool.
 	end
+	--This is the extra highlight circle around the selected node.
 	if gameModel.selectedNode then
 		love.graphics.setColor(220, 100, 100, 200)
 		love.graphics.circle("line", gameModel.selectedNode.x, gameModel.selectedNode.y, 10, 16)
+	end
+
+	--Draw a cube to help understand 3d manipulations.
+	for _, cubeVert in ipairs(cubeVerts) do
+		local vertPos = cubeRot*cubeVert*0.1
+		vertX = (vertPos[1][1]/(vertPos[3][1]-rotateDistance)*window.w)+window.w/2
+		vertY = (vertPos[2][1]/(vertPos[3][1]-rotateDistance)*window.w)+window.h/2
+		love.graphics.setColor(255, 0, 0, 255)
+		love.graphics.circle("fill", vertX, vertY, 10, 36)
+
+		local vertPos2 = vertPos*2
+		vertX2 = (vertPos2[1][1]/(vertPos2[3][1]-rotateDistance)*window.w)+window.w/2
+		vertY2 = (vertPos2[2][1]/(vertPos2[3][1]-rotateDistance)*window.w)+window.h/2
+		love.graphics.circle("fill", vertX2, vertY2, 5, 36)
+		
+		love.graphics.setColor(255, 255, 0, 255)
+		love.graphics.line(vertX, vertY, vertX2, vertY2)
 	end
 end
 
@@ -90,20 +130,6 @@ function spaceView.drawUI()
 		love.graphics.print("Click and drag to move stars.")
 	elseif mc.mode == "createUnit" then
 		love.graphics.print("Click to select a star. Press b, m, and s to create big, medium, and small units.")
-	end
-	--Edges (jump connections) are drawn here.
-	if mi.dragBegin then
-		if mc.dragBegin or mc.dragEnd then
-			love.graphics.setColor(200, 40, 40, 255)
-			local lineBegin = mc.dragBegin or mi.dragBegin
-			local lineEnd = mc.dragEnd or mi.dragEnd
-			love.graphics.line(lineBegin.x, lineBegin.y, lineEnd.x, lineEnd.y)
-			drawArrow(lineEnd.x, lineEnd.y, lineBegin.x, lineBegin.y, finLength+5, finWidth+4, "fin")
-		end
-		--Non-overriden line:
-		love.graphics.setColor(100, 100, 100, 255)
-		love.graphics.line(mi.dragBegin.x, mi.dragBegin.y, mi.dragEnd.x, mi.dragEnd.y)
-		--drawArrow(mi.dragEnd.x, mi.dragEnd.y, mi.dragBegin.x, mi.dragBegin.y, finLength, finWidth)
 	end
 end
 
@@ -146,22 +172,22 @@ function spaceView.units.drawVisiting(node)
 		radius = radius + orbitalSpacing
 		--Draw the units.
 		local x, y = -4, -smallestOrbitalRadius-2*unitDiameter
-		if node == gameModel.selectedNode then 
+		--[[if node == gameModel.selectedNode then 
 			selectedOffset = 14
 		else
 			selectedOffset = 0
 		end
-		love.graphics.print(#team.bigUnits, node.x+x-selectedOffset, node.y+y-selectedOffset-5)
+		love.graphics.print(#team.bigUnits, node.x+x-selectedOffset, node.y+y-selectedOffset-5)]]
 		for _, unit in ipairs(team.bigUnits) do
 			spaceView.units.draw(unit)
 		end
-		x, y = vectorRotate(x, y, deg120)
-		love.graphics.print(#team.mediumUnits, node.x+x+selectedOffset, node.y+y+selectedOffset-5)
+		--[[x, y = vectorRotate(x, y, deg120)
+		love.graphics.print(#team.mediumUnits, node.x+x+selectedOffset, node.y+y+selectedOffset-5)]]
 		for _, unit in ipairs(team.mediumUnits) do
 			spaceView.units.draw(unit)
 		end
-		x, y = vectorRotate(x, y, deg120)
-		love.graphics.print(#team.smallUnits, node.x+x-selectedOffset, node.y+y-selectedOffset)
+		--[[x, y = vectorRotate(x, y, deg120)
+		love.graphics.print(#team.smallUnits, node.x+x-selectedOffset, node.y+y-selectedOffset)]]
 		for _, unit in ipairs(team.smallUnits) do
 			spaceView.units.draw(unit)
 		end

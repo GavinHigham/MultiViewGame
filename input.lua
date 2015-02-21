@@ -10,7 +10,11 @@ function input.update(dt)
 		if cartography.mode == "createEdge" then
 			cartography.dragEnd = nearestWithin(modelInput.dragEnd, mapGraph.nodes, cartography.snapRange)
 		elseif cartography.mode == "moveNode" and cartography.dragBegin then
-			cartography.dragBegin.x, cartography.dragBegin.y = x, y
+			local dragBeginNode = cartography.dragBegin
+			dragBeginNode.x, dragBeginNode.y = x, y
+			dragBeginNode.pos.x = (dragBeginNode.x-(window.w/2))/window.w
+			dragBeginNode.pos.y = (dragBeginNode.y-(window.h/2))/window.w
+			dragBeginNode.rot = matrix{{1,0,0},{0,1,0},{0,0,1}}
 		end
 	else
 		modelInput.dragBegin = nil
@@ -22,24 +26,20 @@ function input.update(dt)
 		inputModel.panBegin = nil
 	end
 	if inputModel.panBegin and inputModel.panEnd then
-		local w, h = love.window.getDimensions()
+		local rotX = inputModel.panEnd.x-inputModel.panBegin.x
+		local rotY = inputModel.panEnd.y-inputModel.panBegin.y
+		rotX, rotY = normalize(rotX, rotY)
+		rotX, rotY = vectorRotate(-rotX, -rotY, math.pi/2)
+		local angle = distance(inputModel.panBegin, inputModel.panEnd)/100
+		local rot = axisAngleVectorRotateMatrix(rotX, rotY, 0, angle)
+		--local rot = axisAngleVectorRotateMatrix(0, 1, 0, angle)
+		cubeRot  =  rot * cubeRot
 		for _, node in ipairs(gameModel.mapGraph.nodes) do
-			--[[local rotX = inputModel.panEnd.x-inputModel.panBegin.x
-			local rotY = inputModel.panEnd.y-inputModel.panBegin.y
-			rotX, rotY = normalize(vectorRotate(rotX, rotY, math.pi/2))
-			local angle = distance(inputModel.panBegin, inputModel.panEnd)/1500000]]
-			local angle = 0.0001
-			local mag = distance({x = 0, y = 0}, node.pos)
-			local newX, newY = normalize(node.pos.x, node.pos.y)
-			newX = newX - 0.5
-			newY = newY - 0.5
-			local newZ = node.pos.z/mag - 0.5
-			newX, newY, newZ = axisAngleVectorRotate(newX, newY, newZ, 0, 1, 0, angle)
-			node.pos.x = (newX+0.5)*mag
-			node.pos.y = (newY+0.5)*mag
-			node.pos.z = (newZ+0.5)*mag
-			print("X: " .. newX .. " Y: " .. newY .. " Z: " .. newZ)
+			node.rot =  rot * node.rot
+			--print("X: " .. node.pos.x .. " Y: " .. node.pos.y .. " Z: " .. node.pos.z)
+			print(node.rot[1][1] .. " " ..cubeRot[1][1] .. " " .. angle)
 		end
+		inputModel.panBegin = inputModel.panEnd
 	end
 end
 
@@ -100,7 +100,7 @@ function cursorreleased(x, y, button)
 			end
 			--Create an edge between the two nodes, if there is not one there already.
 			if not edgeExists(beginNode, endNode) then
-				table.insert(beginNode.outgoing, endNode)
+				table.insert(mapGraph.edges, newEdge(beginNode, endNode))
 			end
 		elseif cartography.mode == "moveNode" and cartography.dragBegin then
 			cartography.dragBegin.x, cartography.dragBegin.y = x, y

@@ -4,7 +4,8 @@ require("mapGraph")
 require("units")
 gameModel = {
 		mapGraph = {
-			nodes = {}
+			nodes = {},
+			edges = {}
 		},
 		cartography = {
 			mode = "createEdge",
@@ -35,9 +36,9 @@ function gameModel.update(dt)
 	for _, unit in ipairs(gameModel.units) do
 		Unit.update(unit, dt)
 	end
-	local w, h = love.window.getDimensions()
-	for _, node in ipairs(gameModel.mapGraph.nodes) do
-		node.x = (node.pos.x-w/2)/node.pos.z+w/2
-		node.y = (node.pos.y-h/2)/node.pos.z+h/2
-	end
+	local w, h = window.w, window.h
 end
+
+-- function serializeTable(tableName, t)
+-- 	serialString = tableName .. " = {"
+-- 	for key, val in ipairs(t) do

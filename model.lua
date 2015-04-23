@@ -24,7 +24,9 @@ gameModel = {
 
 inputModel = {
 	panBegin = nil,
-	panEnd   = nil
+	panEnd   = nil,
+	viewRotation = matrix{{1,0,0},{0,1,0},{0,0,1}},
+	viewRotationDistance = 1
 }
 --Ideas for improvement:
 --**Move input variables into their own model, and make this one "GameModel".
@@ -38,7 +40,3 @@ function gameModel.update(dt)
 	end
 	local w, h = window.w, window.h
 end
-
--- function serializeTable(tableName, t)
--- 	serialString = tableName .. " = {"
--- 	for key, val in ipairs(t) do

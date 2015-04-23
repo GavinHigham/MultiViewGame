@@ -16,6 +16,12 @@ function love.load()
 	local w, h = love.window.getDimensions()
 	window.w = w
 	window.h = h
+
+	if arg[2] then
+		loadSaveGame(gameModel.mapGraph, arg[2])
+	else
+		loadSaveGame(gameModel.mapGraph, "savegame.lua")
+	end
 end
 
 function love.draw()

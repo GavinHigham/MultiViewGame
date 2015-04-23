@@ -14,8 +14,6 @@ local unitDiameter = 10
 local rankSpacing = 5
 local triadSpacing = 5
 local selectedOffset = 0
-local rotateDistance = 1
-cubeRot = matrix{{1,0,0},{0,1,0},{0,0,1}}
 cubeVerts = {
 	matrix{{ 1,  1,  1}}^'T', --right top    front
 	matrix{{-1,  1,  1}}^'T', --left  top    front
@@ -88,9 +86,10 @@ function spaceView.drawUnlit()
 
 	--Nodes (stars) are drawn here.
 	for _, node in ipairs(gameModel.mapGraph.nodes) do
-		newPos = node.rot*matrix{{node.pos.x, node.pos.y, node.pos.z-rotateDistance}}^'T'
-		node.x = (newPos[1][1]/(newPos[3][1]+rotateDistance)*window.w)+window.w/2
-		node.y = (newPos[2][1]/(newPos[3][1]+rotateDistance)*window.w)+window.h/2
+		local newPos = inputModel.viewRotation*matrix{{node.pos.x, node.pos.y, node.pos.z-inputModel.viewRotationDistance}}^'T'
+		local z = window.w/(newPos[3][1]+inputModel.viewRotationDistance)
+		node.x = (newPos[1][1]*z)+window.w/2
+		node.y = (newPos[2][1]*z)+window.h/2
 		love.graphics.setColor(100, 220, 100, 255) --Light greenish
 		love.graphics.circle("fill", node.x, node.y, 5, 16)
 		spaceView.units.drawVisiting(node)
@@ -104,15 +103,15 @@ function spaceView.drawUnlit()
 
 	--Draw a cube to help understand 3d manipulations.
 	for _, cubeVert in ipairs(cubeVerts) do
-		local vertPos = cubeRot*cubeVert*0.1
-		vertX = (vertPos[1][1]/(vertPos[3][1]-rotateDistance)*window.w)+window.w/2
-		vertY = (vertPos[2][1]/(vertPos[3][1]-rotateDistance)*window.w)+window.h/2
+		local vertPos = inputModel.viewRotation*cubeVert*0.1
+		vertX = (vertPos[1][1]/(vertPos[3][1]-inputModel.viewRotationDistance)*window.w)+window.w/2
+		vertY = (vertPos[2][1]/(vertPos[3][1]-inputModel.viewRotationDistance)*window.w)+window.h/2
 		love.graphics.setColor(255, 0, 0, 255)
 		love.graphics.circle("fill", vertX, vertY, 10, 36)
 
 		local vertPos2 = vertPos*2
-		vertX2 = (vertPos2[1][1]/(vertPos2[3][1]-rotateDistance)*window.w)+window.w/2
-		vertY2 = (vertPos2[2][1]/(vertPos2[3][1]-rotateDistance)*window.w)+window.h/2
+		vertX2 = (vertPos2[1][1]/(vertPos2[3][1]-inputModel.viewRotationDistance)*window.w)+window.w/2
+		vertY2 = (vertPos2[2][1]/(vertPos2[3][1]-inputModel.viewRotationDistance)*window.w)+window.h/2
 		love.graphics.circle("fill", vertX2, vertY2, 5, 36)
 		
 		love.graphics.setColor(255, 255, 0, 255)
@@ -231,51 +230,41 @@ function spaceView.units.updateRankPositions(node)
 	for _, visitingTeam in ipairs(node.visitingTeams) do --Maybe change this only to the active team.
 		local x = node.x - (rankSpacing + unitDiameter) * #visitingTeam.bigUnits/2 + unitDiameter/2 + rankSpacing/2
 		local y = node.y + rankSpacing + unitDiameter
-		for _, unit in ipairs(visitingTeam.bigUnits) do
+		placeOnLine = function ()
 			unit.view.rankX = x
 			unit.view.rankY = y
 			x = x + rankSpacing + unitDiameter
+		end
+		for _, unit in ipairs(visitingTeam.bigUnits) do
+			placeOnLine()
 		end
 		y = y + rankSpacing + unitDiameter
 		local x = node.x - (rankSpacing + unitDiameter) * #visitingTeam.mediumUnits/2 + unitDiameter/2 + rankSpacing/2
 		for _, unit in ipairs(visitingTeam.mediumUnits) do
-			unit.view.rankX = x
-			unit.view.rankY = y
-			x = x + rankSpacing + unitDiameter
+			placeOnLine()
 		end
 		y = y + rankSpacing + unitDiameter
 		local x = node.x - (rankSpacing + unitDiameter) * #visitingTeam.smallUnits/2 + unitDiameter/2 + rankSpacing/2
 		for _, unit in ipairs(visitingTeam.smallUnits) do
-			unit.view.rankX = x
-			unit.view.rankY = y
-			x = x + rankSpacing + unitDiameter
+			placeOnLine()
 		end
 	end
 end
 
+function spaceView.units.placeSpaceUnitsOnLine(originX, originY, angle, spacing, units)
+	local x, y = math.cos(angle), math.sin(angle)
+	for i, unit in ipairs(units) do
+		unit.view.triadX, unit.view.triadY = originX+(unitDiameter+spacing)*(x*i), originY+(unitDiameter+spacing)*(y*i)
+	end
+end
 function spaceView.units.updateTriadPositions(node)
 	for _, visitingTeam in ipairs(node.visitingTeams) do --Maybe change this only to the active team.
-		local angle = -deg90-deg45
-		for i, unit in ipairs(visitingTeam.bigUnits) do
-			local cx = i*unitDiameter+triadSpacing  --(#visitingTeam.bigUnits+1)/2
-			local cy = cx
-			local x, y = vectorRotate(cx, cy, angle)
-			unit.view.triadX, unit.view.triadY = node.x+x, node.y+y
-		end
+		local angle = -deg90
+		spaceView.units.placeSpaceUnitsOnLine(node.x, node.y, angle, triadSpacing, visitingTeam.bigUnits)
 		angle = angle + deg120
-		for i, unit in ipairs(visitingTeam.mediumUnits) do
-			local cx = i*unitDiameter+triadSpacing--(#visitingTeam.bigUnits+1)/2
-			local cy = cx
-			local x, y = vectorRotate(cx, cy, angle)
-			unit.view.triadX, unit.view.triadY = node.x+x, node.y+y
-		end
+		spaceView.units.placeSpaceUnitsOnLine(node.x, node.y, angle, triadSpacing, visitingTeam.mediumUnits)
 		angle = angle + deg120
-		for i, unit in ipairs(visitingTeam.smallUnits) do
-			local cx = i*unitDiameter+triadSpacing--(#visitingTeam.bigUnits+1)/2
-			local cy = cx
-			local x, y = vectorRotate(cx, cy, angle)
-			unit.view.triadX, unit.view.triadY = node.x+x, node.y+y
-		end
+		spaceView.units.placeSpaceUnitsOnLine(node.x, node.y, angle, triadSpacing, visitingTeam.smallUnits)
 	end
 end
 
@@ -288,24 +277,23 @@ function spaceView.units.updateOrbitPositions(node)
 	for _, visitingTeam in ipairs(node.visitingTeams) do
 		local angleSpacing = (deg120)/#(visitingTeam.bigUnits)
 		local angle = deg120+deg90 + angleSpacing/2
-		for _, unit in ipairs(visitingTeam.bigUnits) do
+		placeOnCircle = function (unit)
 			unit.view.orbitX = node.x+radius*math.cos(angle)
 			unit.view.orbitY = node.y+radius*math.sin(angle)
 			angle = angle + angleSpacing
+		end
+		for _, unit in ipairs(visitingTeam.bigUnits) do
+			placeOnCircle(unit)
 		end
 		angleSpacing = (deg120)/#(visitingTeam.mediumUnits)
 		angle = -deg30 + angleSpacing/2
 		for _, unit in ipairs(visitingTeam.mediumUnits) do
-			unit.view.orbitX = node.x+radius*math.cos(angle)
-			unit.view.orbitY = node.y+radius*math.sin(angle)
-			angle = angle + angleSpacing
+			placeOnCircle(unit)
 		end
 		angleSpacing = (deg120)/#(visitingTeam.smallUnits)
 		angle = deg90 + angleSpacing/2
 		for _, unit in ipairs(visitingTeam.smallUnits) do
-			unit.view.orbitX = node.x+radius*math.cos(angle)
-			unit.view.orbitY = node.y+radius*math.sin(angle)
-			angle = angle + angleSpacing
+			placeOnCircle(unit)
 		end
 		radius = radius + orbitalSpacing
 	end

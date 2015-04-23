@@ -17,13 +17,13 @@ end
 --Returns new x', y' such that x'^2 + y'^2 = 1, and the vector <x', y'> has the same orientation as <x, y>
 function normalize(x, y)
 	local mag = math.sqrt(x*x+y*y)
-	if mag == 0 then mag = 1 end --Totally not okay. Will silently fail to normalize in weird edge cases. Ah well, C'est la vie.
+	if mag == 0 then return 0, 0 end --mag will only be 0 if the original vector was 0-length.
 	return x/mag, y/mag
 end
 
 function vec3norm(x, y, z)
 	local mag = math.sqrt(x*x+y*y+z*z)
-	if mag == 0 then mag = 1 end
+	if mag == 0 then return 0, 0, 0 end --mag will only be 0 if the original vector was 0-length.
 	return x/mag, y/mag, z/mag
 end
 

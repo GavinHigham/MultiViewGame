@@ -10,11 +10,10 @@ function input.update(dt)
 		if cartography.mode == "createEdge" then
 			cartography.dragEnd = nearestWithin(modelInput.dragEnd, mapGraph.nodes, cartography.snapRange)
 		elseif cartography.mode == "moveNode" and cartography.dragBegin then
-			local dragBeginNode = cartography.dragBegin
-			dragBeginNode.x, dragBeginNode.y = x, y
-			dragBeginNode.pos.x = (dragBeginNode.x-(window.w/2))/window.w
-			dragBeginNode.pos.y = (dragBeginNode.y-(window.h/2))/window.w
-			dragBeginNode.rot = matrix{{1,0,0},{0,1,0},{0,0,1}}
+			local node = cartography.dragBegin
+			local rotatedPos = inputModel.viewRotation*matrix{{node.pos.x, node.pos.y, node.pos.z-inputModel.viewRotationDistance}}^'T'
+			local posMat = matrix.invert(inputModel.viewRotation) * matrix{{(x-(window.w/2))/window.w, (y-(window.h/2))/window.w, rotatedPos[3][1]}}^'T'
+			node.pos = {x = posMat[1][1], y = posMat[2][1], z = posMat[3][1] + inputModel.viewRotationDistance}
 		end
 	else
 		modelInput.dragBegin = nil
@@ -33,34 +32,17 @@ function input.update(dt)
 		local angle = distance(inputModel.panBegin, inputModel.panEnd)/100
 		local rot = axisAngleVectorRotateMatrix(rotX, rotY, 0, angle)
 		--local rot = axisAngleVectorRotateMatrix(0, 1, 0, angle)
-		cubeRot  =  rot * cubeRot
-		for _, node in ipairs(gameModel.mapGraph.nodes) do
-			node.rot =  rot * node.rot
-			--print("X: " .. node.pos.x .. " Y: " .. node.pos.y .. " Z: " .. node.pos.z)
-			print(node.rot[1][1] .. " " ..cubeRot[1][1] .. " " .. angle)
-		end
+		inputModel.viewRotation =  rot * inputModel.viewRotation
 		inputModel.panBegin = inputModel.panEnd
 	end
 end
-
-function love.mousepressed(x, y, button)
-	cursorpressed(x, y, button)
-end
-
-function love.mousereleased(x, y, button)
-	cursorreleased(x, y, button)
-end
-
--- I should probably have another layer of indirection with these functions, to make input code as reusable as possible.
--- I'm chosing not to add it for now, because it's simple enough to reimplement later, and it simplifies this code.
 
 --Handles click events on the UI. Returns false if the click did not intersect with any UI elements.
 function UIClick(x, y, button)
 	return false
 end
 
---Stand-in for love.mousepressed, so we can support non-mouse cursors.
-function cursorpressed(x, y, button)
+function love.mousepressed(x, y, button)
 	if not UIClick(x, y, button) then
 		if button == 'l' then
 			modelInput.dragBegin = {x = x, y = y}
@@ -79,21 +61,20 @@ function cursorpressed(x, y, button)
 	end
 end
 
---Stand-in for love.mousereleased, so we can support non-mouse cursors.
-function cursorreleased(x, y, button)
+function love.mousereleased(x, y, button)
 	if button == 'l' then
 		modelInput.dragEnd = {x = x, y = y}
 		if cartography.mode == "createEdge" then
 			local beginNode, endNode
 			--Create new nodes if the beginning or end of the drag needs one.
 			if not cartography.dragBegin then
-				beginNode = newNode(modelInput.dragBegin.x, modelInput.dragBegin.y)
+				beginNode = newNode(modelInput.dragBegin.x, modelInput.dragBegin.y, inputModel)
 				table.insert(mapGraph.nodes, beginNode)
 			else
 				beginNode = cartography.dragBegin
 			end
 			if not cartography.dragEnd then
-				endNode = newNode(modelInput.dragEnd.x, modelInput.dragEnd.y)
+				endNode = newNode(modelInput.dragEnd.x, modelInput.dragEnd.y, inputModel)
 				table.insert(mapGraph.nodes, endNode)
 			else
 				endNode = cartography.dragEnd
@@ -102,8 +83,6 @@ function cursorreleased(x, y, button)
 			if not edgeExists(beginNode, endNode) then
 				table.insert(mapGraph.edges, newEdge(beginNode, endNode))
 			end
-		elseif cartography.mode == "moveNode" and cartography.dragBegin then
-			cartography.dragBegin.x, cartography.dragBegin.y = x, y
 		end
 		modelInput.dragBegin  = nil
 		modelInput.dragEnd    = nil
@@ -149,5 +128,7 @@ function love.keyreleased(key)
 		for _, node in ipairs(gameModel.mapGraph.nodes) do
 			node.pos.z = node.pos.z - 0.3
 		end
+	elseif key == "x" then
+		print(serializeMapGraph(gameModel.mapGraph.nodes, gameModel.mapGraph.edges, assert(io.open("savegame.lua", "w"))))
 	end
 end
